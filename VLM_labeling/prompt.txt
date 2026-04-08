@@ -1,0 +1,14 @@
+You are an expert in spatio-temporal video analysis. Your task is to analyze the provided video and determine whether it exhibits "Causality."
+
+# Definition of Causality
+In this context, "Causality" is defined strictly as observable cause-and-effect mechanisms within spatio-temporal dynamics. 
+- It means Event A explicitly and visibly causes Event B.
+- It goes beyond strict Newtonian physics (e.g., collisions or gravity) to include complex logical event sequences (e.g., a pencil moving on paper causing text to appear, or a person flipping a switch causing a light to turn on).
+
+# Output Format
+Provide your final answer in the following JSON format:
+{
+  "reasoning": "Step-by-step reasoning evaluating if this specific resulting_event is strictly dependent on the initiating_event.",
+  "video_has_general_causality": true/false 
+  "confidence": 1-5, (1: pure guess, 3: ambiguous, 5: undeniable visual proof)
+}

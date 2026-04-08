@@ -1,2 +1,4 @@
 evaluation/migrate_labels_to_metadata.py
 __pycache__/
+.env
+**/.env
