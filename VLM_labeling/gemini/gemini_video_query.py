@@ -12,10 +12,15 @@ from tqdm import tqdm
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+VLM_ROOT = SCRIPT_DIR.parent
 load_dotenv(SCRIPT_DIR / ".env")
-PROJECT_ROOT = SCRIPT_DIR.parent
-DATA_ROOT = PROJECT_ROOT / "data" / "processed_dataset"
-DEFAULT_PROMPT_FILE = SCRIPT_DIR / "prompt.txt"
+DEFAULT_PROMPT_FILE = VLM_ROOT / "prompt.txt"
+DATASET_DIR_ALIASES = {
+    "animal-kingdom": "animal",
+    "mit": "general",
+    "tiny-Kinetics-400": "human",
+    "physics-IQ-benchmark": "physics",
+}
 
 PRICING_PER_1M = {
     "input": 2,
@@ -79,18 +84,29 @@ def compute_cost(usage) -> dict:
     }
 
 
-def load_metadata(dataset: str) -> list[dict]:
-    metadata_path = DATA_ROOT / dataset / "dataset_metadata.json"
-    if not metadata_path.exists():
-        raise FileNotFoundError(f"Metadata not found: {metadata_path}")
-    with open(metadata_path, "r") as f:
-        return json.load(f)
+def get_dataset_dir(dataset_root: Path, dataset: str) -> Path:
+    """Locate a dataset in either processed_dataset or released subset layout."""
+    candidates = [dataset_root / dataset]
+    alias = DATASET_DIR_ALIASES.get(dataset)
+    if alias:
+        candidates.append(dataset_root / alias)
+    for candidate in candidates:
+        if (candidate / "dataset_metadata.json").exists():
+            return candidate
+    tried = ", ".join(str(path) for path in candidates)
+    raise FileNotFoundError(f"Metadata not found; tried: {tried}")
+
+
+def load_metadata(dataset_root: Path, dataset: str) -> tuple[list[dict], Path]:
+    dataset_dir = get_dataset_dir(dataset_root, dataset)
+    with open(dataset_dir / "dataset_metadata.json", "r", encoding="utf-8") as f:
+        return json.load(f), dataset_dir
 
 
 def get_video_paths(
-    dataset: str, direction: str, id_start: int | None, id_end: int | None
+    dataset_root: Path, dataset: str, direction: str, id_start: int | None, id_end: int | None
 ) -> list[tuple[int, Path]]:
-    metadata = load_metadata(dataset)
+    metadata, dataset_dir = load_metadata(dataset_root, dataset)
     id_map = {entry["id"]: entry for entry in metadata}
 
     if id_start is None and id_end is None:
@@ -101,13 +117,16 @@ def get_video_paths(
         all_ids = range(start, end + 1)
 
     key = "video_path_forward" if direction == "fwd" else "video_path_backward"
+    direction_dir = "fwd" if direction == "fwd" else "bwd"
     results = []
     for vid_id in all_ids:
         if vid_id not in id_map:
             print(f"[WARN] ID {vid_id} not found in metadata, skipping.")
             continue
-        rel_path = id_map[vid_id][key].lstrip("/")
-        full_path = PROJECT_ROOT / rel_path
+        raw_path = Path(id_map[vid_id][key])
+        full_path = dataset_dir / direction_dir / raw_path.name
+        if not full_path.exists() and raw_path.exists():
+            full_path = raw_path
         if not full_path.exists():
             print(f"[WARN] Video not found: {full_path}, skipping.")
             continue
@@ -144,13 +163,19 @@ def query_gemini(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Query Gemini API with videos from processed_dataset"
+        description="Query Gemini API with videos from a YoCausal dataset"
     )
     parser.add_argument(
         "--dataset",
         type=str,
         required=True,
-        help="Dataset folder name under processed_dataset (e.g. mit, animal-kingdom, tiny-Kinetics-400, physics-IQ-benchmark)",
+        help="Dataset name (e.g. mit, animal-kingdom, tiny-Kinetics-400, physics-IQ-benchmark)",
+    )
+    parser.add_argument(
+        "--dataset-root",
+        type=Path,
+        required=True,
+        help="Path to processed_dataset/ or to a released YoCausal-dataset/subset/ directory",
     )
     parser.add_argument(
         "--direction",
@@ -175,19 +200,19 @@ def main():
         "--prompt",
         type=str,
         default=None,
-        help="Prompt text (if not set, reads from prompt.txt in the same folder)",
+        help="Prompt text (if not set, reads from VLM_labeling/prompt.txt)",
     )
     parser.add_argument(
         "--prompt-file",
         type=str,
         default=None,
-        help="Path to prompt file (default: level2-VLM/prompt.txt)",
+        help="Path to prompt file (default: VLM_labeling/prompt.txt)",
     )
     parser.add_argument(
         "--model",
         type=str,
         default="gemini-3-pro-preview",
-        help="Gemini model name (default: gemini-3.1-pro-preview)",
+        help="Gemini model name (default: gemini-3-pro-preview)",
     )
     parser.add_argument(
         "--api-key",
@@ -245,7 +270,7 @@ def main():
     print("-" * 60)
 
     video_paths = get_video_paths(
-        args.dataset, args.direction, args.id_start, args.id_end
+        args.dataset_root, args.dataset, args.direction, args.id_start, args.id_end
     )
     if not video_paths:
         print("No videos found for the given parameters.")
@@ -253,7 +278,7 @@ def main():
 
     print(f"Found {len(video_paths)} video(s) to process.\n")
 
-    metadata = load_metadata(args.dataset)
+    metadata, _ = load_metadata(args.dataset_root, args.dataset)
     id_map = {entry["id"]: entry for entry in metadata}
 
     output_path = Path(args.output) if args.output else None

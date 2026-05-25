@@ -10,7 +10,17 @@ CCI (Causality Cognition Index): Measures the gap between RSI on causal
     CCI(D) = RSI(Dc) - RSI(Dnc)
 """
 
+import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+
+VLM_FILE_TO_DATASET = {
+    "animal-kingdom_fwd.json": "animal",
+    "mit_fwd.json": "mit",
+    "tiny-Kinetics-400_fwd.json": "kinetics",
+    "physics-IQ-benchmark_fwd.json": "physics",
+}
 
 
 def normalize_dataset_name(dataset_name: str) -> str:
@@ -127,8 +137,7 @@ def compute_cci(
             continue
 
         ds_labels = causality_labels.get(ds_name, {})
-        dc = [r for r in results if ds_labels.get(r.get("id"), False)]
-        dnc = [r for r in results if not ds_labels.get(r.get("id"), False)]
+        dc, dnc = _split_by_labels(results, ds_labels)
 
         if dc:
             wr_dc, _, _, _ = compute_winrate(dc)
@@ -149,8 +158,8 @@ def _split_by_labels(
     labels: Dict[int, bool],
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Split results into positive/negative groups based on labels."""
-    pos = [r for r in results if labels.get(r.get("id"), False)]
-    neg = [r for r in results if not labels.get(r.get("id"), False)]
+    pos = [r for r in results if labels.get(r.get("id")) is True]
+    neg = [r for r in results if labels.get(r.get("id")) is False]
     return pos, neg
 
 

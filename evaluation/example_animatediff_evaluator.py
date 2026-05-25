@@ -15,14 +15,17 @@ Usage:
 
 import subprocess
 import tempfile
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 from PIL import Image
 
-from base_evaluator import BaseVideoEvaluator
+try:
+    from .base_evaluator import BaseVideoEvaluator
+except ImportError:
+    from base_evaluator import BaseVideoEvaluator
 
 
 class AnimateDiffEvaluator(BaseVideoEvaluator):
@@ -99,14 +102,20 @@ class AnimateDiffEvaluator(BaseVideoEvaluator):
         windows = self._slice_into_windows(frames)
         total_loss = 0.0
 
+        generator = torch.Generator(device=self.device).manual_seed(noise_seed)
+
         for window_frames, valid_start in windows:
             # 4. Encode to latent space
             latents = self._encode_video(window_frames)
 
             # 5. Compute loss at this timestep
             # IMPORTANT: same seed for fwd/bwd
-            torch.manual_seed(noise_seed)
-            noise = torch.randn_like(latents)
+            noise = torch.randn(
+                latents.shape,
+                generator=generator,
+                device=latents.device,
+                dtype=latents.dtype,
+            )
 
             loss = self._compute_loss_at_timestep(
                 latents, noise, prompt_embeds, timestep, valid_start

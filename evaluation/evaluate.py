@@ -11,11 +11,11 @@ Usage (standalone):
         --evaluator_class MyModelEvaluator \\
         --dataset_paths data/processed_dataset/animal-kingdom/dataset_metadata.json \\
                         data/processed_dataset/mit/dataset_metadata.json \\
-        --dataset_base_path /project/AoTbenchmark/data/processed_dataset \\
+        --dataset_base_path /path/to/data/processed_dataset \\
         --output result.json
 
 Usage (programmatic):
-    from evaluate import run_evaluation
+    from evaluation.evaluate import run_evaluation
     from my_evaluator import MyModelEvaluator
 
     evaluator = MyModelEvaluator(model_dir="weights/", device="cuda")
@@ -35,12 +35,45 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from base_evaluator import BaseVideoEvaluator
-from metrics import (
-    compute_overall_metrics,
-    compute_per_dataset_metrics,
-    normalize_dataset_name,
-)
+try:
+    from .base_evaluator import BaseVideoEvaluator
+    from .metrics import (
+        compute_overall_metrics,
+        compute_per_dataset_metrics,
+        normalize_dataset_name,
+    )
+except ImportError:
+    from base_evaluator import BaseVideoEvaluator
+    from metrics import (
+        compute_overall_metrics,
+        compute_per_dataset_metrics,
+        normalize_dataset_name,
+    )
+
+
+DATASET_SUBSET_ALIASES = {
+    "animal-kingdom": "animal",
+    "mit": "general",
+    "tiny-Kinetics-400": "human",
+    "physics-IQ-benchmark": "physics",
+}
+
+
+def _relative_video_candidates(raw_path: str) -> List[str]:
+    """Return source-layout and released-subset-layout paths for a video."""
+    relative = raw_path.lstrip("/")
+    for prefix in ("data/processed_dataset/", "processed_dataset/", "data/"):
+        if relative.startswith(prefix):
+            relative = relative[len(prefix):]
+            break
+
+    candidates = [relative]
+    parts = Path(relative).parts
+    if parts:
+        alias = DATASET_SUBSET_ALIASES.get(parts[0])
+        if alias:
+            candidates.append(str(Path(alias, *parts[1:])))
+    return candidates
 
 
 def resolve_video_path(
@@ -58,30 +91,28 @@ def resolve_video_path(
     if os.path.isabs(raw_path) and os.path.exists(raw_path):
         return raw_path
 
-    if dataset_base_path:
-        # Strip leading /data/processed_dataset/ or similar prefixes
-        for prefix in ["/data/processed_dataset/", "/processed_dataset/", "/data/"]:
-            if raw_path.startswith(prefix):
-                relative = raw_path[len(prefix):]
-                candidate = os.path.join(dataset_base_path, relative)
-                if os.path.exists(candidate):
-                    return candidate
+    relative_candidates = _relative_video_candidates(raw_path)
 
-        # Try joining directly
+    if dataset_base_path:
+        for relative in relative_candidates:
+            candidate = os.path.join(dataset_base_path, relative)
+            if os.path.exists(candidate):
+                return candidate
+
         candidate = os.path.join(dataset_base_path, raw_path.lstrip("/"))
         if os.path.exists(candidate):
             return candidate
 
     # Resolve relative to dataset JSON directory
     json_dir = os.path.dirname(os.path.abspath(dataset_json_path))
-    # Go up to find data root (dataset_metadata.json is typically 2-3 levels deep)
     for levels_up in range(4):
         base = json_dir
         for _ in range(levels_up):
             base = os.path.dirname(base)
-        candidate = os.path.join(base, raw_path.lstrip("/"))
-        if os.path.exists(candidate):
-            return candidate
+        for relative in relative_candidates:
+            candidate = os.path.join(base, relative)
+            if os.path.exists(candidate):
+                return candidate
 
     # Fallback: return as-is (will fail at load time with a clear error)
     return raw_path
