@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://www.youzhexie.me/">You-Zhe Xie</a><sup>🦊🌐*</sup>,
-  <a href="#">Yu-Hsuan Li</a><sup>🦊*</sup>,
+  <a href="https://www.yhlizzz.com/">Yu-Hsuan Li</a><sup>🦊*</sup>,
   <a href="https://jayinnn.dev/">Jie-Ying Lee</a><sup>🦊</sup>,
   <a href="https://kpzhang93.github.io/">Kaipeng Zhang</a><sup>🌐</sup>,<br>
   <a href="https://yulunalexliu.github.io/">Yu-Lun Liu</a><sup>🦊&dagger;</sup>,
