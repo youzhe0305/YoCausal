@@ -20,6 +20,7 @@
 </p>
 
 [![Project Page](https://img.shields.io/badge/YoCausal-Website-green?logo=googlechrome&logoColor=white)](https://www.youzhexie.me/papers/YoCausal/index.html)
+[![arXiv](https://img.shields.io/badge/arXiv-2605.30346-b31b1b.svg)](https://arxiv.org/abs/2605.30346)
 [![Dataset Download](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-yellow)](https://huggingface.co/datasets/YouZhe/YoCausal-dataset)
 [![Code](https://img.shields.io/badge/Code-GitHub-black?logo=github&logoColor=white)](https://github.com/youzhe0305/YoCausal)
 [![Leaderboard Submission](https://img.shields.io/badge/Leaderboard-Submission-blue)](#leaderboard-submission)
