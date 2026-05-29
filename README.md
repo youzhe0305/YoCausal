@@ -302,7 +302,7 @@ Submitted materials will be used to run the YoCausal evaluation for leaderboard 
 @article{xie2026yocausal,
   title   = {YoCausal: How Far is Video Generation from World Model? A Causality Perspective},
   author  = {Xie, You-Zhe and Li, Yu-Hsuan and Lee, Jie-Ying and Zhang, Kaipeng and Liu, Yu-Lun and Wang, Zhixiang},
-  journal = {arXiv preprint arXiv:26XX.XXXXX},
+  journal = {arXiv preprint arXiv:2605.30346},
   year    = {2026}
 }
 ```
