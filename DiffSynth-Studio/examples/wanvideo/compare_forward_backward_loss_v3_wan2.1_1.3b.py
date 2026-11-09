@@ -6,7 +6,7 @@ For Wan2.1-T2V-1.3B model
 v3-1.3B Changes:
 - Optimized for Wan2.1-T2V-1.3B model (smaller, faster)
 - Same features as v3: JSON dataset, FPS resampling, bucket resolution, sliding window
-- 10 noise samples, single measurement per sample
+- 1 noise sample per timestep by default, single measurement per sample
 - Supports start_idx/end_idx for parallel processing
 """
 import torch
@@ -413,7 +413,7 @@ def main():
     parser.add_argument("--target_fps", type=int, default=MODEL_TARGET_FPS, help="Target FPS for model")
     parser.add_argument("--window_size", type=int, default=MODEL_FRAME_LIMIT, help="Frame window size (4n+1)")
     parser.add_argument("--num_timesteps", type=int, default=10, help="Number of timesteps to sample")
-    parser.add_argument("--num_noise_samples", type=int, default=10, help="Number of noise samples")
+    parser.add_argument("--num_noise_samples", type=int, default=1, help="Number of noise samples")
     parser.add_argument("--output_path", type=str, default="./result_output_1.3b.json", help="Output path")
     parser.add_argument("--device", type=str, default="cuda", help="Device to use")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")

@@ -84,7 +84,7 @@ python compare_forward_backward_loss_v3_wan2.2_a14b.py \
 | `--target_fps` | 16 | Target FPS for video preprocessing |
 | `--window_size` | 33-81 | Max frames per window (must satisfy 4n+1) |
 | `--num_timesteps` | 10 | Number of uniformly sampled timesteps |
-| `--num_noise_samples` | 10 | Number of noise samples per timestep |
+| `--num_noise_samples` | 1 | Number of noise samples per timestep |
 | `--seed` | 42 | Base seed; pair at global index `i` uses seed `seed + i` |
 | `--device` | cuda | Compute device |
 | `--vram_limit` | None | VRAM budget in GB (enables CPU offloading) |
@@ -134,7 +134,7 @@ Results are saved to disk after each video is processed, enabling safe interrupt
     "eval_settings": {
       "fps": 16,
       "timesteps_sampled": [90, 181, 272, ...],
-      "num_noise_samples": 10,
+      "num_noise_samples": 1,
       "window_size": 33
     }
   },

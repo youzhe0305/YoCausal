@@ -8,7 +8,7 @@ v3 Changes:
 - FPS resampling using torchvision.io
 - Bucket-based resolution (short edge resize + center crop)
 - Sliding window for long videos with accumulated loss
-- 10 noise samples, single measurement per sample
+- 1 noise sample per timestep by default, single measurement per sample
 """
 import torch
 import os
@@ -445,7 +445,7 @@ def main():
     parser.add_argument("--target_fps", type=int, default=MODEL_TARGET_FPS, help="Target FPS for model")
     parser.add_argument("--window_size", type=int, default=MODEL_FRAME_LIMIT, help="Frame window size (4n+1)")
     parser.add_argument("--num_timesteps", type=int, default=10, help="Number of timesteps to sample")
-    parser.add_argument("--num_noise_samples", type=int, default=10, help="Number of noise samples")
+    parser.add_argument("--num_noise_samples", type=int, default=1, help="Number of noise samples")
     parser.add_argument("--output_path", type=str, default="./result_output.json", help="Output path")
     parser.add_argument("--device", type=str, default="cuda", help="Device to use")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
